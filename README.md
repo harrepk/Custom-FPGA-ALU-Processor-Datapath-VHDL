@@ -9,7 +9,6 @@
 ![ModelSim](https://img.shields.io/badge/Simulation-ModelSim-00A98F?style=for-the-badge)
 ![FPGA](https://img.shields.io/badge/Board-Altera_DE2_·_Cyclone_II-F7931E?style=for-the-badge)
 
-*COE328 Digital Systems · Lab 6*
 
 </div>
 
@@ -121,8 +120,3 @@ To simulate, compile the ALU and `tb_alu.vhd` in ModelSim and run the testbench.
 
 ---
 
-<div align="center">
-
-*Built for COE328 Digital Systems at Toronto Metropolitan University*
-
-</div>
