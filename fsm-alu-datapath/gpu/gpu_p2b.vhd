@@ -1,0 +1,59 @@
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY gpu_p2b IS
+    PORT ( Clock, Resetn : IN  STD_LOGIC;
+           A, B          : IN  STD_LOGIC_VECTOR(7 DOWNTO 0);
+           Neg           : OUT STD_LOGIC;
+           HEX_id        : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- student-ID digit
+           HEX_R2        : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- Result high nibble
+           HEX_R1        : OUT STD_LOGIC_VECTOR(6 DOWNTO 0) );-- Result low  nibble
+END gpu_p2b;
+
+ARCHITECTURE structural OF gpu_p2b IS
+    COMPONENT latch1
+        PORT ( A : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+               Resetn, Clock : IN STD_LOGIC;
+               Q : OUT STD_LOGIC_VECTOR(7 DOWNTO 0) );
+    END COMPONENT;
+    COMPONENT fsm
+        PORT ( clk, reset : IN STD_LOGIC;
+               current_state : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+               student_id    : OUT STD_LOGIC_VECTOR(3 DOWNTO 0) );
+    END COMPONENT;
+    COMPONENT dec4to16
+        PORT ( S : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+               En : IN STD_LOGIC;
+               OP : OUT STD_LOGIC_VECTOR(15 DOWNTO 0) );
+    END COMPONENT;
+    COMPONENT alu
+        PORT ( Clock : IN STD_LOGIC;
+               A, B  : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+               OP    : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+               Neg   : OUT STD_LOGIC;
+               R1, R2: OUT STD_LOGIC_VECTOR(3 DOWNTO 0) );
+    END COMPONENT;
+    COMPONENT sseg
+        PORT ( bcd : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+               HEX : OUT STD_LOGIC_VECTOR(6 DOWNTO 0) );
+    END COMPONENT;
+
+    SIGNAL regA, regB : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL cur_state, sid, r1s, r2s : STD_LOGIC_VECTOR(3 DOWNTO 0);
+    SIGNAL op_sig : STD_LOGIC_VECTOR(15 DOWNTO 0);
+BEGIN
+    L_A : latch1 PORT MAP ( A => A, Resetn => Resetn, Clock => Clock, Q => regA );
+    L_B : latch1 PORT MAP ( A => B, Resetn => Resetn, Clock => Clock, Q => regB );
+
+    U_FSM : fsm PORT MAP ( clk => Clock, reset => Resetn,
+                           current_state => cur_state, student_id => sid );
+
+    U_DEC : dec4to16 PORT MAP ( S => cur_state, En => '1', OP => op_sig );
+
+    U_ALU : alu PORT MAP ( Clock => Clock, A => regA, B => regB, OP => op_sig,
+                           Neg => Neg, R1 => r1s, R2 => r2s );
+
+    U_ID : sseg PORT MAP ( bcd => sid, HEX => HEX_id );
+    U_H2 : sseg PORT MAP ( bcd => r2s, HEX => HEX_R2 );
+    U_H1 : sseg PORT MAP ( bcd => r1s, HEX => HEX_R1 );
+END structural;

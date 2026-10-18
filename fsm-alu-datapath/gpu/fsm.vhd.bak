@@ -1,0 +1,56 @@
+-- ============================================================
+-- COE/BME 328 - Lab 6 : FSM (Control Unit sub-component)  [Part III-a]
+-- Problem 1 / Problem 2 "initial design":
+--   * Acts as an UP-COUNTER cycling states 0..8 consecutively, then back to 0.
+--   * current_state (4-bit) is sent to the 4x16 decoder -> selects ALU op.
+--   * student_id (4-bit) is the ID digit shown for the current state on a 7-seg.
+--
+-- Student ID = 501312123  (digits d1..d9 = 5,0,1,3,1,2,1,2,3)
+--   state 0 -> 5    state 3 -> 3    state 6 -> 1
+--   state 1 -> 0    state 4 -> 1    state 7 -> 2
+--   state 2 -> 1    state 5 -> 2    state 8 -> 3
+-- ============================================================
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
+
+ENTITY fsm IS
+    PORT ( clk, reset   : IN  STD_LOGIC;
+           current_state: OUT STD_LOGIC_VECTOR(3 DOWNTO 0);  -- to 4x16 decoder
+           student_id   : OUT STD_LOGIC_VECTOR(3 DOWNTO 0) ); -- current ID digit
+END fsm;
+
+ARCHITECTURE Behavior OF fsm IS
+    SIGNAL y     : UNSIGNED(3 DOWNTO 0) := "0000";  -- state register (0..8)
+    SIGNAL y_slv : STD_LOGIC_VECTOR(3 DOWNTO 0);    -- state as slv (for lookup)
+BEGIN
+    -- next-state: simple up-count 0->8 then wrap to 0
+    PROCESS ( clk, reset )
+    BEGIN
+        IF reset = '0' THEN
+            y <= "0000";
+        ELSIF clk'EVENT AND clk = '1' THEN
+            IF y = 8 THEN          -- state 8 is the last
+                y <= "0000";
+            ELSE
+                y <= y + 1;
+            END IF;
+        END IF;
+    END PROCESS;
+
+    current_state <= STD_LOGIC_VECTOR(y);
+    y_slv         <= STD_LOGIC_VECTOR(y);
+
+    -- ID-digit lookup for student number 501312123
+    WITH y_slv SELECT
+        student_id <= "0101" WHEN "0000",   -- 5
+                      "0000" WHEN "0001",   -- 0
+                      "0001" WHEN "0010",   -- 1
+                      "0011" WHEN "0011",   -- 3
+                      "0001" WHEN "0100",   -- 1
+                      "0010" WHEN "0101",   -- 2
+                      "0001" WHEN "0110",   -- 1
+                      "0010" WHEN "0111",   -- 2
+                      "0011" WHEN "1000",   -- 3
+                      "0000" WHEN OTHERS;
+END Behavior;
